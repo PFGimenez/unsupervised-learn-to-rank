@@ -3,6 +3,7 @@ class LPTree:
     def __init__(self, all_vars):
         self.vars = all_vars
 
+    # nécessaire ?
     def random_init():
         pass
 
