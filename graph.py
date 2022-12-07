@@ -9,40 +9,30 @@ class Graph:
     def del_node(self, n):
         self.nodes.remove(n)
 
-class NodeBak:
-
-    def __init__(self, var, cpt, parent=None, children=None):
-        self.var = var
-        self.cpt = cpt
-        self.parents = parents
-        self.children = children
-
-    def add_parent(self, p):
-        append(self.parents, p)
-        p._add_child(self)
-
-    def _add_parent(self, p):
-        append(self.parents, p)
-
-    def add_child(self, c):
-        append(self.children, c)
-        c._add_parent(self)
-
-    def _add_child(self, c):
-        append(self.children, c)
-
 class Node:
 
-    def __init__(self, var, cpt, children={}):
+    def __init__(self, var, cpt):
         self.var = var
         self.cpt = cpt
-        self.children = children
+        self.children = {}
 
-    def add_child(self, c, label: None):
+    def add_child(self, c, label=None):
         self.children[label] = c
 
     def export(self, filename):
-        pass
+        with open(filename, "w") as f:
+            f.write("digraph G { \n");
+            f.write("ordering=out;\n");
+            self._export(f)
+            f.write("}\n");
+
+    def _export(self, f):
+        f.write(str(id(self))+" [label=\""+str(self.var)+" "+str(self.cpt)+"\"];\n");
+        for k,v in self.children.items():
+            v._export(f)
+            if k is None:
+                k=""
+            f.write(str(id(self))+" -> "+str(id(v))+" [label=\""+str(k)+"\"];\n");
 
 class Edge:
 
