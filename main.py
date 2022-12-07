@@ -11,5 +11,7 @@ def open_dataset(file):
 
 if __name__ == "__main__":
     h = cpt.Dataset("datasets/renault_small.csv")
-    g = aaailearn.learn_lptree(h, 1000)
+    # print(h.get_count({"v1":"0","v2":"2","v3":"0","v41":"1"},["v7","v6","v4"]))
+    # print(h.get_domain(["v7","v6"]))
+    g = aaailearn.learn_lptree(h, 1000, 1)
     g.export("out.dot")

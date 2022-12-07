@@ -1,4 +1,5 @@
 import csv
+import itertools
 
 class Dataset:
 
@@ -22,6 +23,16 @@ class Dataset:
         print("Variables:",self.vars)
         print("Domains:", self.domains)
 
+    def get_domain_size(self, variables):
+        out = 1
+        for v in variables:
+            out *= len(self.domains[v])
+        return out
+
+    def get_domain(self, variables):
+        domains = [self.domains[v] for v in variables]
+        return list(itertools.product(*domains))
+
     def get_compatible(self, instance):
         out = []
         for h in self.dataset:
@@ -29,22 +40,27 @@ class Dataset:
                 out.append(h)
         return out
 
-    def get_count(self, instance, var):
-        out = self.memoize.get((tuple(sorted(instance.items())), var))
+    def instantiate(self, instance, variables, value):
+        for i in range(len(variables)):
+            instance[variables[i]] = value[i]
+
+    def get_count(self, instance, variables):
+        out = self.memoize.get((tuple(sorted(instance.items())), tuple(variables)))
         if out is not None:
             return out
         l = self.get_compatible(instance)
         order = {}
-        assert(instance.get(var) is None)
+        for v in variables:
+            assert(instance.get(v) is None)
         for i in l:
-            val = i[var]
+            val = tuple([i[v] for v in variables])
             order[val] = order.get(val, 0) + 1
         order = dict(sorted(order.items(), key=lambda item: -item[1]))
-        self.memoize[(tuple(sorted(instance.items())),var)] = order
+        self.memoize[(tuple(sorted(instance.items())),tuple(variables))] = order
         return order
 
-    def get_pref_order(self, instance, var):
-        return list(set(self.get_count(instance, var).keys()).union(set(self.domains[var])))
+    def get_pref_order(self, instance, variables):
+        return list(set(self.get_count(instance, variables).keys()).union(set(self.get_domain(variables))))
 
 class ConditionalPreferenceTable:
 

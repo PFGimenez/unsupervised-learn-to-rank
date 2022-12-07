@@ -11,8 +11,8 @@ class Graph:
 
 class Node:
 
-    def __init__(self, var, cpt):
-        self.var = var
+    def __init__(self, variables, cpt):
+        self.variables = variables
         self.cpt = cpt
         self.children = {}
 
@@ -27,7 +27,7 @@ class Node:
             f.write("}\n");
 
     def _export(self, f):
-        f.write(str(id(self))+" [label=\""+str(self.var)+" "+str(self.cpt)+"\"];\n");
+        f.write(str(id(self))+" [label=\""+str(self.variables)+" "+str(self.cpt)+"\"];\n");
         for k,v in self.children.items():
             v._export(f)
             if k is None:
