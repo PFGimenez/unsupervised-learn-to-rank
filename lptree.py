@@ -20,7 +20,8 @@ class LPTree:
         return sum_ranks / len(dataset.dataset)
 
     def get_rank(self, o):
-
+        r = 1+self.tree.get_lp_rank(o, 0)
+        return r
 
     def compare(self, o1, o2):
         return False

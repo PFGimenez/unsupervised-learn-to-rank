@@ -1,5 +1,6 @@
 import graph
 import itertools
+import lptree
 
 def powerset(iterable, k):
     s = list(iterable)
@@ -8,7 +9,10 @@ def powerset(iterable, k):
 def compare_two_sets(set1, set2, dataset, instance):
     pass
 
-def learn_lptree(dataset, tau, k, seen_vars=[], instance={}):
+def learn_lptree(dataset, tau, k):
+    return lptree.LPTree(_learn_lptree(dataset, tau, k), dataset.vars)
+
+def _learn_lptree(dataset, tau, k, seen_vars=[], instance={}):
     # print("Search node. Instance:",instance,"seen vars:",seen_vars)
     # todo leaf
     best_var = None
@@ -38,7 +42,7 @@ def learn_lptree(dataset, tau, k, seen_vars=[], instance={}):
     # print(best_var,count)
     seen_vars = seen_vars.copy()
     seen_vars += best_var
-    n = graph.Node(best_var, dataset.get_pref_order(instance, best_var))
+    n = graph.Node(best_var, dataset.get_domain_size(best_var), dataset.get_pref_order(instance, best_var))
 
     # leaf
     if len(seen_vars) == len(dataset.vars):
@@ -56,9 +60,9 @@ def learn_lptree(dataset, tau, k, seen_vars=[], instance={}):
         for v in dataset.get_domain(best_var):
             new_inst = instance.copy()
             dataset.instantiate(new_inst, best_var, v)
-            c = learn_lptree(dataset, tau, k, seen_vars, new_inst)
+            c = _learn_lptree(dataset, tau, k, seen_vars, new_inst)
             n.add_child(c, v)
     else:
-        c = learn_lptree(dataset, tau, k, seen_vars, instance)
+        c = _learn_lptree(dataset, tau, k, seen_vars, instance)
         n.add_child(c)
     return n

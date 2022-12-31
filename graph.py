@@ -11,10 +11,11 @@ class Graph:
 
 class Node:
 
-    def __init__(self, variables, cpt):
+    def __init__(self, variables, domain_size, cpt):
+        self.domain_size = domain_size
         self.variables = variables
-        self.cpt = cpt
-        self.children = {}
+        self.cpt = cpt # list of labels
+        self.children = {} # Key: label. Value: child node
 
     def add_child(self, c, label=None):
         self.children[label] = c
@@ -36,6 +37,23 @@ class Node:
 
     def get_MDL_length(self):
         return 0 # TODO
+
+    def get_lp_rank(self, o, curr):
+        nb = 0
+        for k in self.cpt:
+            if k is None or k==(o[self.variables[0]],): # TODO plusieurs variables
+                c = self.children.get(k)
+                if c is None: # maybe no label
+                    c = self.children.get(None)
+                # print("Var",self.variables[0],"rank",nb)
+                curr = curr*self.domain_size+nb
+                if c is None:
+                    return curr
+                else:
+                    return c.get_lp_rank(o, curr)
+            nb += 1
+        assert False
+
 
 class Edge:
 
