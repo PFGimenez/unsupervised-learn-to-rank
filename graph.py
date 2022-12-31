@@ -34,6 +34,9 @@ class Node:
                 k=""
             f.write(str(id(self))+" -> "+str(id(v))+" [label=\""+str(k)+"\"];\n");
 
+    def get_MDL_length(self):
+        return 0 # TODO
+
 class Edge:
 
     def __init__(self, label=None):
