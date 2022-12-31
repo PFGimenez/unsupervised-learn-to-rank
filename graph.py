@@ -1,3 +1,5 @@
+import math
+
 class Graph:
 
     def __init__(self, nodes):
@@ -11,9 +13,10 @@ class Graph:
 
 class Node:
 
-    def __init__(self, variables, domain_size, cpt):
+    def __init__(self, variables, domain_size, cpt, all_vars):
         self.domain_size = domain_size
         self.variables = variables
+        self.all_vars = all_vars
         self.cpt = cpt # list of labels
         self.children = {} # Key: label. Value: child node
 
@@ -41,8 +44,16 @@ class Node:
                 k=""
             f.write(str(id(self))+" -> "+str(id(v))+" [label=\""+str(k)+"\"];\n");
 
-    def get_MDL_length(self):
-        return 0 # TODO
+    def get_MDL(self):
+        l = math.log(len(self.all_vars))*(len(self.variables)+1)+len(self.cpt)*(math.log(len(self.cpt))-1) # Stirling’s approximation
+        for k in self.cpt:
+            c = self.children.get(k)
+            if c is not None:
+                l += c.get_MDL()
+        c = self.children.get(None)
+        if c is not None:
+            l += c.get_MDL()
+        return l
 
     def get_lp_rank(self, o, curr):
         nb = 0

@@ -43,7 +43,7 @@ def _learn_lptree(dataset, tau, k, seen_vars=[], instance={}):
     label_edges = True
     seen_vars = seen_vars.copy()
     seen_vars += best_var
-    n = graph.Node(best_var, dataset.get_domain_size(best_var), dataset.get_pref_order(instance, best_var))
+    n = graph.Node(best_var, dataset.get_domain_size(best_var), dataset.get_pref_order(instance, best_var), dataset.vars)
 
     # leaf
     if len(seen_vars) == len(dataset.vars):
@@ -51,7 +51,6 @@ def _learn_lptree(dataset, tau, k, seen_vars=[], instance={}):
 
     if True: # new behavior, with both labeled and unlabeled edges
         total_count = 0
-        print(best_var,count)
         for _,v in count.items():
             total_count += v
         for v in n.cpt:

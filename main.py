@@ -16,3 +16,5 @@ if __name__ == "__main__":
     l = aaailearn.learn_lptree(h, 1000, 1)
     l.tree.export("out.dot")
     print("Empirical mean rank:",l.get_mean_rank(h))
+    print("Model MDL:",l.get_model_MDL())
+    print("Data MDL:",l.get_data_MDL(h))
