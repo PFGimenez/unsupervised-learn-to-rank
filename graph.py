@@ -28,8 +28,14 @@ class Node:
             f.write("}\n");
 
     def _export(self, f):
-        f.write(str(id(self))+" [label=\""+str(self.variables)+" "+str(self.cpt)+"\"];\n");
-        for k,v in self.children.items():
+        f.write(str(id(self))+" [label=\""+str(self.variables)+"\nCPT:"+str(self.cpt)+"\"];\n");
+        for k in self.cpt:
+            self._export_one_child(f, k) # if labeled edges
+        self._export_one_child(f, None) # if unlabeled edge
+
+    def _export_one_child(self, f, k):
+        v = self.children.get(k)
+        if v is not None:
             v._export(f)
             if k is None:
                 k=""

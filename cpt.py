@@ -55,11 +55,18 @@ class Dataset:
         for i in l:
             val = tuple([i[v] for v in variables])
             order[val] = order.get(val, 0) + 1
-        order = dict(sorted(order.items(), key=lambda item: -item[1]))
         self.memoize[(tuple(sorted(instance.items())),tuple(variables))] = order
         return order
 
     def get_pref_order(self, instance, variables):
+        order = self.get_count(instance, variables) # get counts
+        order = list(sorted(order.items(), key=lambda item: -item[1])) # sort counts
+        l = [u for (u,v) in order] # keep only labels
+        for d in self.get_domain(variables): # add labels absent from counts
+            if d not in l:
+                l.append(d)
+        return l
+
         return list(set(self.get_count(instance, variables).keys()).union(set(self.get_domain(variables))))
 
 class ConditionalPreferenceTable:
