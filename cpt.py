@@ -15,11 +15,13 @@ class Dataset:
                     self.vars = list(row.keys())
         self.dataset = d
         self.domains = {}
+        self.space_size = 1
         for v in self.vars:
             self.domains[v] = set([])
             for i in self.dataset:
                 self.domains[v].add(i[v])
             self.domains[v] = list(self.domains[v])
+            self.space_size *= len(self.domains[v])
         print("Variables:",self.vars)
         print("Domains:", self.domains)
 

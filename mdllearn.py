@@ -8,10 +8,10 @@ def modify_and_evaluate(dataset, model):
     best_score = None
     best_model = None
     for n in neighbors:
-        score = n.get_MDL_length()
-        for o in dataset:
-            score += n.get_MDL_encoding(o)
-        if best_score is None or score > best_score:
+        if n is None:
+            continue
+        score = n.get_MDL(dataset)
+        if best_score is None or score < best_score:
             best_score = score
             best_model = n
-    return (best_model, best_score)
+    return best_model

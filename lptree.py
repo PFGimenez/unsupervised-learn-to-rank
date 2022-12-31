@@ -1,4 +1,5 @@
 import math
+import copy
 
 class LPTree:
 
@@ -16,10 +17,21 @@ class LPTree:
         return sum_ranks
 
     def get_MDL(self, dataset):
-        return get_model_MDL() + self.get_data_MDL()
+        return self.get_model_MDL() + self.get_data_MDL(dataset)
 
+    # modify the model
     def get_neighbors(self):
-        return []
+        return [self.remove_random_leaf() for i in range(50)]
+
+    def remove_random_leaf(self):
+        new_tree = copy.deepcopy(self)
+        new_tree.tree.remove_random_leaf()
+        return new_tree
+
+    def merge_least_preferred_branches(self):
+        new_tree = copy.deepcopy(self)
+        new_tree.tree.merge_least_preferred_branches()
+        return new_tree
 
     def get_mean_rank(self, dataset):
         sum_ranks = 0
@@ -28,7 +40,7 @@ class LPTree:
         return sum_ranks / len(dataset.dataset)
 
     def get_rank(self, o):
-        r = 1 + self.tree.get_lp_rank(o, 0)
+        r = 1 + self.tree.get_lp_rank(o)
         return r
 
     def compare(self, o1, o2):
