@@ -1,5 +1,6 @@
 import math
 import copy
+import random
 
 class LPTree:
 
@@ -21,17 +22,47 @@ class LPTree:
 
     # modify the model
     def get_neighbors(self):
-        return [self.remove_random_leaf() for i in range(50)]
+        # return self.merge_least_preferred_branches()
+        return self.remove_random_leaf() + self.merge_least_preferred_branches()
 
     def remove_random_leaf(self):
-        new_tree = copy.deepcopy(self)
-        new_tree.tree.remove_random_leaf()
-        return new_tree
+        out = []
+        nb_leaves = len(self.tree.get_leaves())
+        # print("Leaves:",nb_leaves)
+        for i in range(nb_leaves):
+            # print("Removing leaf",i)
+            new_tree = copy.deepcopy(self)
+            l = new_tree.tree.get_leaves()
+            n,v = l[i]
+            del n.children[v]
+            out.append(new_tree)
+        return out
 
     def merge_least_preferred_branches(self):
-        new_tree = copy.deepcopy(self)
-        new_tree.tree.merge_least_preferred_branches()
-        return new_tree
+        out = []
+        nb_branches = len(self.tree.get_branching_nodes())
+        # print("Branching nodes:",nb_branches)
+        for i in range(nb_branches):
+            # print("Merging branches",i)
+            new_tree = copy.deepcopy(self)
+            n = new_tree.tree.get_branching_nodes()[i]
+            n.merge_branches()
+            out.append(new_tree)
+        return out
+
+    def add_new_leaf(self):
+        out = []
+        nb_leaves = len(self.tree.get_leaves())
+        # print("Leaves:",nb_leaves)
+        for i in range(nb_leaves):
+            # print("Removing leaf",i)
+            new_tree = copy.deepcopy(self)
+            l = new_tree.tree.get_leaves()
+            n,v = l[i]
+            del n.children[v]
+            out.append(new_tree)
+        return out
+
 
     def get_mean_rank(self, dataset):
         sum_ranks = 0

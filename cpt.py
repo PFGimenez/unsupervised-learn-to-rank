@@ -1,19 +1,22 @@
 import csv
 import itertools
+import pandas as pd
+
+def read_csv(file):
+    with open(file, mode='r') as f:
+        reader = csv.DictReader(f)
+        d = []
+        for row in reader:
+            d.append(row)
+        return pd.DataFrame(d)
 
 class Dataset:
 
-    def __init__(self, file):
-        d = []
+    def __init__(self, df):
+        self.vars = list(df.columns)
+        print(self.vars)
+        self.dataset = df.to_dict('records')
         self.memoize = {}
-        self.vars = None
-        with open(file, mode='r') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                d.append(row)
-                if self.vars is None:
-                    self.vars = list(row.keys())
-        self.dataset = d
         self.domains = {}
         self.space_size = 1
         for v in self.vars:

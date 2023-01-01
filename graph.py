@@ -1,5 +1,4 @@
 import math
-import random
 
 class Graph:
 
@@ -46,20 +45,46 @@ class Node:
                 k=""
             f.write(str(id(self))+" -> "+str(id(v))+" [label=\""+str(k)+"\"];\n");
 
-    def remove_random_leaf(self):
-        # random child
-        k,v = random.choice(list(self.children.items()))
-        # if it is a leaf
-        if len(v.children)==0:
-            self.children[k] = None
+    def get_branching_nodes(self): # return the list of nodes that have a least two outgoing branches
+        l = []
+        if len(self.children) >= 2: # it’s a branching node
+            l.append(self)
+        for v in self.children.values():
+            l += v.get_branching_nodes()
+        return l
+
+    def merge_branches(self):
+        if self.children.get(None) is None:
+            self.children[None] = self.children[self.cpt[-2]]
+            del self.children[-2]
+            del self.children[-1]
         else:
-            v.remove_random_leaf()
+            for v in reversed(self.cpt):
+                if self.children.get(v) is not None:
+                    self.children[None] = self.children[v]
+                    del self.children[v]
+                    break
 
-    def get_branching_nodes(self):
-        pass
+    def get_leaves(self): # return the list of couples (node, value) such as the child of node with the label "value" is a leaf
+        l = []
+        for k,v in self.children.items():
+            if len(v.children) == 0: # it’s a leaf
+                l.append((self,k))
+            else:
+                l += v.get_leaves()
+        return l
 
-    def merge_least_preferred_branches(self):
-        pass
+    def get_uncompleted_branches(self, variables=[]):
+        l = []
+        variables += self.variables
+        if len(self.children) == 0: # it’s a leaf
+            if len(variables) == len(all_vars): # not possible to add a new node
+                return []
+            else: # possible to add a new node
+                return [(self, variables)]
+        for k,v in self.children.items():
+            l += v.get_uncompleted_branches(variables.copy())
+        return l
 
     def get_MDL(self):
         l = math.log(len(self.all_vars))*(len(self.variables)+1)+len(self.cpt)*(math.log(len(self.cpt))-1) # Stirling’s approximation
