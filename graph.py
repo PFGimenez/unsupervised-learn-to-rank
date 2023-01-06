@@ -74,16 +74,19 @@ class Node:
                 l += v.get_leaves()
         return l
 
-    def get_uncompleted_branches(self, variables=[]):
+    def get_uncompleted_branches(self, variables):
         l = []
         variables += self.variables
         if len(self.children) == 0: # it’s a leaf
-            if len(variables) == len(all_vars): # not possible to add a new node
+            if len(variables) == len(self.all_vars): # not possible to add a new node
                 return []
             else: # possible to add a new node
                 return [(self, variables)]
-        for k,v in self.children.items():
-            l += v.get_uncompleted_branches(variables.copy())
+        if len(self.children.items()) == 1: # one child only: no need to copy variables
+            l += self.children.get(None).get_uncompleted_branches(variables)
+        else:
+            for k,v in self.children.items():
+                l += v.get_uncompleted_branches(variables.copy())
         return l
 
     def get_MDL(self):
@@ -103,8 +106,9 @@ class Node:
     def _get_lp_rank(self, o, curr, rest):
         nb = 0
         rest = rest/self.domain_size
+        value = tuple([o[k] for k in self.variables])
         for k in self.cpt:
-            if k is None or k==(o[self.variables[0]],): # TODO plusieurs variables
+            if k is None or k == value:
                 c = self.children.get(k)
                 if c is None: # maybe no label
                     c = self.children.get(None)

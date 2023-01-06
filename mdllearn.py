@@ -15,7 +15,7 @@ def learn(dataset, initial_model):
     return best_model
 
 def modify_and_evaluate(dataset, model):
-    neighbors = model.get_neighbors()
+    neighbors = model.get_neighbors(dataset)
     best_score = None
     best_model = None
     for n in neighbors:
