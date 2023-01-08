@@ -1,4 +1,3 @@
-import graph
 import itertools
 import lptree
 
@@ -43,7 +42,7 @@ def _learn_lptree(dataset, tau, k, seen_vars=[], instance={}):
     label_edges = True
     seen_vars = seen_vars.copy()
     seen_vars += best_var
-    n = graph.Node(best_var, dataset.get_domain_size(best_var), dataset.get_pref_order(instance, best_var), dataset.vars, dataset.space_size)
+    n = lptree.Node(best_var, dataset.get_domain_size(best_var), dataset.get_pref_order(instance, best_var), dataset.vars, dataset.space_size)
 
     # leaf
     if len(seen_vars) == len(dataset.vars):
