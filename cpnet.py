@@ -5,62 +5,94 @@ class CPNet:
 
     def __init__(self, all_vars):
         # non-cylic CP-net only
-        self.roots = all_vars.copy()
-        self.topo_order = all_vars.copy()
         self.all_vars = all_vars
-        self.nodes = {}
+        self.nodes = []
         for v in all_vars:
-            self.nodes[v] = Node([v])
+            self.nodes.append(Node([v]))
+        self.topo_order = list(self.nodes)
+
+    def get_roots(self):
+        roots = []
+        for n in self.nodes:
+            if len(n.parents) == 0:
+                roots.append(n)
+        return roots
+
+    def merge_nodes(self, n1, n2): # merge n2 into n1
+        assert n1 != n2
+        if self.topo_order.index(n1) > self.topo_order.index(n2):
+            # n1 is lower than n2 in the DAG: n1 gets n2’s parents (to keep a DAG)
+            n1.parents = list(set(n1.parents + n2.parents))
+        else:
+            # n1 is higher than n2 in the DAG: n1 gets n2’s children (to keep a DAG)
+            n1.children = list(set(n1.children + n2.children))
+        n1.variables += n2.variables
+        self.nodes.remove(n2)
+        for n in self.nodes:
+            if n2 in n.children:
+                n.children.remove(n2)
+            if n2 in n.parents:
+                n.parents.remove(n2)
+        self.update_topo_order()
+
+    def split_node(self, n1, var): # create a new node with variables "var" from n1
+        n2 = Node(var)
+        self.nodes.append(n2)
+        for v in var:
+            n1.variables.remove(v)
+        for n in n1.parents:
+            n2.parents.append(n)
+        for n in n1.children:
+            n2.children.append(n)
+        self.update_topo_order()
 
     def add_child(self, p, c):
-        if c not in self.nodes[p].children:
-            self.nodes[p].children.append(c)
-            self.nodes[c].parents.append(p)
-            if c in self.roots:
-                self.roots.remove(c)
+        if c not in p.children:
+            p.children.append(c)
+            c.parents.append(p)
             new_order = self.update_topo_order()
-            if new_order is False: # not a DAG anymore
-                self.nodes[p].children.remove(c)
-                self.nodes[c].parents.remove(p)
+            if new_order is False: # not a DAG anymore, go back to previous status
+                p.children.remove(c)
+                c.parents.remove(p)
 
     def update_cpt(self, dataset):
-        for v in self.all_vars:
-            self.nodes[v].cpt = {}
-            parents = self.nodes[v].parents
-            dom = dataset.get_domain(parents)
+        for v in self.nodes:
+            v.cpt = {}
+            par = []
+            for p in v.parents:
+                par += p.variables
+            dom = dataset.get_domain(par)
             for val in dom:
                 instance = {}
-                outcome.instantiate(instance, parents, val)
-                self.nodes[v].cpt[val] = dataset.get_pref_order(instance, [v])
+                outcome.instantiate(instance, par, val)
+                v.cpt[val] = dataset.get_pref_order(instance, v.variables)
 
     def export(self, filename):
         with open(filename, "w") as f:
             f.write("digraph G { \n");
             f.write("ordering=out;\n");
             for v in self.topo_order:
-                f.write(v+" [label=\""+str(v)+"\nCPT:"+str(self.nodes[v].cpt)+"\"];\n");
-                for c in self.nodes[v].children:
-                    f.write(v+" -> "+c+";\n");
+                f.write(str(id(v))+" [label=\""+str(v.variables)+"\nCPT:"+str(v.cpt)+"\"];\n");
+                for c in v.children:
+                    f.write(str(id(v))+" -> "+str(id(c))+";\n");
             f.write("}\n");
 
     def update_topo_order(self):
-        # TODO: order of node, not variables
         # Kahn’s algorithm
         topo_order = []
-        roots = self.roots.copy()
+        roots = self.get_roots()
         while len(roots) > 0:
-            # print("Iter",roots)
             n = roots.pop()
             topo_order.append(n)
-            for c in self.nodes[n].children:
+            for c in n.children:
                 has_parent = False
-                for p in self.nodes[c].parents:
+                for p in c.parents:
                     if p not in topo_order:
                         has_parent = True
                         break
                 if not has_parent:
                     roots.append(c)
-        if len(topo_order) < len(self.all_vars):
+        if len(topo_order) < len(self.nodes):
             # there is a cycle
             return False
         else:
