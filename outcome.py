@@ -23,7 +23,13 @@ class Dataset:
         self.dataset = df.to_dict('records')
         self.memoize = {}
         self.domains = {}
+        self.uniques = []
+        self.counts = {}
         self.space_size = 1
+        for o in self.dataset:
+            if o not in self.uniques:
+                self.uniques.append(o)
+            self.counts[repr(o)] = self.counts.get(repr(o),0) + 1
         for v in self.vars:
             self.domains[v] = set([])
             for i in self.dataset:

@@ -124,8 +124,8 @@ class LPTree:
 
     def get_data_MDL(self, dataset):
         sum_ranks = 0
-        for instance in dataset.dataset:
-            sum_ranks += math.log(self.get_rank(instance))
+        for instance in dataset.uniques:
+            sum_ranks += dataset.counts[repr(instance)] * math.log(self.get_rank(instance))
         return sum_ranks
 
     def get_MDL(self, dataset):

@@ -12,20 +12,31 @@ def open_dataset(file):
     return d
 
 if __name__ == "__main__":
-    csv = outcome.read_csv("datasets/renault_smallest.csv")
+    csv = outcome.read_csv("datasets/renault_smaller.csv")
     h = outcome.Dataset(csv)
+
+
+    # net = cpnet.CPNet(["A","B","C"])
+    # net.add_child(net.nodes[0], net.nodes[1])
+    # net.add_child(net.nodes[1], net.nodes[2])
+    # net.nodes[0].cpt = {(): [("a1",),("a2",)]}
+    # net.nodes[1].cpt = {("a1",): [("b1",),("b2",)],("a2",): [("b2",),("b1",)]}
+    # net.nodes[2].cpt = {("b1",): [("c1",),("c2",)],("b2",): [("c2",),("c1",)]}
+    # print(net.get_path_length({"A": "a2", "B": "b1", "C": "c1"}))
+    # net.export("cpnet2.dot")
+
+    # net2 = cpnet.CPNet(h.vars)
+    # net2.add_child(net2.nodes[0], net2.nodes[1])
+    # net2.update_cpt(h)
+    # net2.export("cpnet2.dot")
+    # print("Manual MDL:",net2.get_MDL(h))
 
     net = cpnet.CPNet(h.vars)
     net.update_cpt(h)
-    net.add_child(net.nodes[0], net.nodes[1])
-    net.add_child(net.nodes[1], net.nodes[2])
-    net.merge_nodes(net.nodes[1], net.nodes[0])
-    print(net.get_MDL(h))
-    # net.add_child(net.nodes[0], net.nodes[1])
-    # net.add_child(net.nodes[2], net.nodes[1])
-    net.update_cpt(h)
+    # net,_ = mdllearn.modify_and_evaluate(h, net)
+    net = mdllearn.learn(h, net)
+    print("Final MDL:",net.get_MDL(h))
     net.export("cpnet.dot")
-    # print(net.get_MDL(h))
 
     # l = aaailearn.learn_lptree(h, 500, 1)
     # l.root.export("out.dot")

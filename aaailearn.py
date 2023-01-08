@@ -1,9 +1,6 @@
 import itertools
 import lptree
-
-def powerset(iterable, k):
-    s = list(iterable)
-    return list(itertools.chain.from_iterable(itertools.combinations(s, r) for r in range(1,k+1)))
+import utils
 
 def compare_two_sets(set1, set2, dataset, instance):
     pass
@@ -17,7 +14,7 @@ def _learn_lptree(dataset, tau, k, seen_vars=[], instance={}):
     best_var = None
     score_best = None
 
-    sets = powerset(set(dataset.vars).difference(seen_vars),k)
+    sets = utils.powerset(set(dataset.vars).difference(seen_vars),k)
 
     # for x in set(dataset.vars).difference(seen_vars):
     for x in sets:
