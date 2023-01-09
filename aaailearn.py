@@ -1,9 +1,13 @@
 import itertools
 import lptree
-import utils
+import outcome
 
-def compare_two_sets(set1, set2, dataset, instance):
-    pass
+def powerset(iterable, k):
+    s = list(iterable)
+    return list(itertools.chain.from_iterable(itertools.combinations(s, r) for r in range(1,k+1)))
+
+# def compare_two_sets(set1, set2, dataset, instance):
+    # pass
 
 def learn_lptree(dataset, tau, k):
     return lptree.LPTree(_learn_lptree(dataset, tau, k), dataset.vars)
@@ -14,7 +18,7 @@ def _learn_lptree(dataset, tau, k, seen_vars=[], instance={}):
     best_var = None
     score_best = None
 
-    sets = utils.powerset(set(dataset.vars).difference(seen_vars),k)
+    sets = powerset(set(dataset.vars).difference(seen_vars),k)
 
     # for x in set(dataset.vars).difference(seen_vars):
     for x in sets:
@@ -53,20 +57,20 @@ def _learn_lptree(dataset, tau, k, seen_vars=[], instance={}):
             co = count[v]
             if co >= tau and total_count - co >= tau:
                 new_inst = instance.copy()
-                dataset.instantiate(new_inst, best_var, v)
+                outcome.instantiate(new_inst, best_var, v)
                 c = _learn_lptree(dataset, tau, k, seen_vars, new_inst)
                 n.add_child(c, v)
                 total_count -= co
             else:
                 new_inst = instance.copy()
-                dataset.instantiate(new_inst, best_var, v)
+                outcome.instantiate(new_inst, best_var, v)
                 c = _learn_lptree(dataset, tau, k, seen_vars, new_inst)
                 n.add_child(c) # create a branch with all the other values
                 # learn with the most common value instantiated
                 break
 
                 new_inst = instance.copy()
-                dataset.instantiate(new_inst, best_var, v)
+                outcome.instantiate(new_inst, best_var, v)
 
     else: # Legacy behavior (AAAI’18), with either labeled or unlabeled edges
         if len(count.keys()) < dataset.get_domain_size(best_var):
@@ -80,7 +84,7 @@ def _learn_lptree(dataset, tau, k, seen_vars=[], instance={}):
         if label_edges:
             for v in dataset.get_domain(best_var):
                 new_inst = instance.copy()
-                dataset.instantiate(new_inst, best_var, v)
+                outcome.instantiate(new_inst, best_var, v)
                 c = _learn_lptree(dataset, tau, k, seen_vars, new_inst)
                 n.add_child(c, v)
         else:

@@ -4,18 +4,20 @@ import copy
 
 class CPNet:
 
-    def __init__(self, all_vars):
+    def __init__(self, all_vars, dataset=None):
         # non-cylic CP-net only
         self.nodes = []
         for v in all_vars:
             self.nodes.append(Node([v]))
         self.topo_order = list(self.nodes)
+        if dataset is not None:
+            self.update_cpt(dataset)
 
     def get_neighbors(self, dataset):
         cpnets = self.update_edges_neighbors() #+ self.merge_nodes_neighbors()# + self.split_nodes_neighbors()
         for net in cpnets:
             net.update_cpt(dataset)
-        print("Nb neighbors:",len(cpnets))
+        # print("Nb neighbors:",len(cpnets))
         return cpnets
 
 
@@ -162,8 +164,10 @@ class CPNet:
             f.write("digraph G { \n");
             f.write("ordering=out;\n");
             for v in self.topo_order:
-                f.write(str(id(v))+" [label=\""+str(v.variables)+"\"];\n");
-                # f.write(str(id(v))+" [label=\""+str(v.variables)+"\nCPT:"+str(v.cpt)+"\"];\n");
+                if len(str(v.cpt)) < 100: # short CPT
+                    f.write(str(id(v))+" [label=\""+str(v.variables)+"\nCPT:"+str(v.cpt)+"\"];\n");
+                else:
+                    f.write(str(id(v))+" [label=\""+str(v.variables)+"\"];\n");
                 for c in v.children:
                     f.write(str(id(v))+" -> "+str(id(c))+";\n");
             f.write("}\n");
@@ -200,7 +204,23 @@ class CPNet:
         # print("model MDL:",l)
         return l
 
-    def get_data_MDL(self, dataset):
+
+    def get_preferred_extension(self, instance):
+        instance = instance.copy()
+        for n in self.topo_order:
+            var = []
+            for p in n.parents:
+                var += p.variables
+            value_parents = tuple([instance[k] for k in var])
+            l = n.cpt[value_parents]
+            for o in l:
+                instance2 = {}
+                outcome.instantiate(instance2, n.variables, o)
+                if outcome.is_compatible(instance2, instance):
+                    outcome.instantiate(instance, n.variables, o)
+        return instance
+
+    def get_data_MDL2(self, dataset):
         sum_score = 0
         for instance in dataset.uniques:
             sum_score += dataset.counts[repr(instance)] * self.get_path_length(instance.copy())*math.log(len(dataset.vars))

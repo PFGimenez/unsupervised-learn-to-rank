@@ -2,6 +2,7 @@ import outcome
 import aaailearn
 import mdllearn
 import cpnet
+import experiment
 
 def open_dataset(file):
     d = []
@@ -31,20 +32,16 @@ if __name__ == "__main__":
     # net2.export("cpnet2.dot")
     # print("Manual MDL:",net2.get_MDL(h))
 
-    net = cpnet.CPNet(h.vars)
-    net.update_cpt(h)
-    # net,_ = mdllearn.modify_and_evaluate(h, net)
+    net = cpnet.CPNet(h.vars, h)
     net = mdllearn.learn(h, net)
-    print("Final MDL:",net.get_MDL(h))
+    # print("New data MDL:",mdllearn.get_data_MDL(net, h))
     net.export("cpnet.dot")
+    experiment.recommendation_in_config(h, net)
 
-    # l = aaailearn.learn_lptree(h, 500, 1)
-    # l.root.export("out.dot")
-    # print("Initial LP-tree obtained")
-    # print("Empirical mean rank:",l.get_mean_rank(h))
+    l = aaailearn.learn_lptree(h, 500, 1)
     # l = mdllearn.learn(h, l)
-    # print("Empirical mean rank:",l.get_mean_rank(h))
-    # l.root.export("out2.dot")
+    l.export("lptree.dot")
+    experiment.recommendation_in_config(h, l)
 
     # l = aaailearn.learn_lptree(h, 1000, 1)
     # l.root.export("out.dot")

@@ -1,16 +1,59 @@
 import aaailearn
+import random
+import math
+
+# random order
+def get_data_MDL2(model, dataset):
+    sum_score = 0
+    var_order = dataset.vars.copy()
+    for instance in dataset.uniques:
+        # print("Score for",instance)
+        partial_inst = {}
+        random.shuffle(var_order)
+        for v in var_order:
+            predict = model.get_preferred_extension(partial_inst)
+            # print("Extension of",partial_inst,"is",predict)
+            if predict != instance: # error
+                sum_score += dataset.counts[repr(instance)]
+                partial_inst[v] = instance[v] # give another clue
+                # print("Error")
+            else:
+                # print("All good")
+                break
+    return sum_score
+
+# always correct a variable
+def get_data_MDL(model, dataset):
+    sum_score = 0
+    for instance in dataset.uniques:
+        # print("Score for",instance)
+        partial_inst = {}
+        while True:
+            predict = model.get_preferred_extension(partial_inst)
+            for k,v in instance.items():
+                if v != predict.get(k): # error
+                    # print("Error for",k)
+                    sum_score += dataset.counts[repr(instance)] * math.log(len(dataset.vars)) # TODO: how to count?
+                    partial_inst[k] = v # give one clue
+                    break
+            # print("No error")
+            break # no error
+    return sum_score
+
+def get_MDL(model, dataset):
+    return model.get_model_MDL() + get_data_MDL(model, dataset)
 
 def learn(dataset, initial_model):
     l = initial_model
     best_model = l
-    best_score = l.get_MDL(dataset)
+    best_score = get_MDL(l, dataset)
+    print("Initial MDL:",best_score)
     while True:
         l,s = modify_and_evaluate(dataset, l)
         if best_score is None or s < best_score:
             best_model = l
             best_score = s
-            print("Current MDL:",l.get_MDL(dataset))
-            l.export("latest.dot")
+            print("Current MDL:",s)
         else:
             break
     return best_model
@@ -22,7 +65,8 @@ def modify_and_evaluate(dataset, model):
     for n in neighbors:
         if n is None:
             continue
-        score = n.get_MDL(dataset)
+        score = get_MDL(n,dataset)
+        # print("Neighbor MDL:",score)
         if best_score is None or score < best_score:
             best_score = score
             best_model = n

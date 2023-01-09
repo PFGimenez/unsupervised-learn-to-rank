@@ -6,6 +6,11 @@ def instantiate(instance, variables, value):
     for i in range(len(variables)):
         instance[variables[i]] = value[i]
 
+def is_compatible(instance1, instance2):
+    for k,v in instance1.items():
+        if instance2.get(k) is not None and instance2.get(k) != v:
+            return False
+    return True
 
 def read_csv(file):
     with open(file, mode='r') as f:
@@ -56,7 +61,6 @@ class Dataset:
                 out.append(h)
         return out
 
-
     def get_count(self, instance, variables):
         out = self.memoize.get((tuple(sorted(instance.items())), tuple(variables)))
         if out is not None:
@@ -79,6 +83,3 @@ class Dataset:
             if d not in l:
                 l.append(d)
         return l
-
-        # return list(set(self.get_count(instance, variables).keys()).union(set(self.get_domain(variables))))
-

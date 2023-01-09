@@ -1,7 +1,7 @@
 import math
 import copy
 import random
-
+import outcome
 
 class Node:
 
@@ -15,13 +15,6 @@ class Node:
 
     def add_child(self, c, label=None):
         self.children[label] = c
-
-    def export(self, filename):
-        with open(filename, "w") as f:
-            f.write("digraph G { \n");
-            f.write("ordering=out;\n");
-            self._export(f)
-            f.write("}\n");
 
     def _export(self, f):
         f.write(str(id(self))+" [label=\""+str(self.variables)+"\nCPT:"+str(self.cpt)+"\"];\n");
@@ -113,6 +106,19 @@ class Node:
             nb += 1
         assert False
 
+    def get_preferred_extension(self, instance):
+        for o in self.cpt:
+            instance2 = {}
+            outcome.instantiate(instance2, self.variables, o)
+            if outcome.is_compatible(instance2, instance):
+                outcome.instantiate(instance, self.variables, o)
+                if self.children.get(o) is not None: # take the labelled edge
+                    self.children.get(o).get_preferred_extension(instance)
+                elif self.children.get(None) is not None: # if not, take the unlabelled edge
+                    self.children.get(None).get_preferred_extension(instance)
+                # is not, it’s a leaf
+                return
+
 class LPTree:
 
     def __init__(self, graph, variables):
@@ -134,6 +140,11 @@ class LPTree:
     def update_cpt(self, dataset):
         self._update_cpt(dataset, self.root)
 
+    def get_preferred_extension(self, instance):
+        new_inst = instance.copy()
+        self.root.get_preferred_extension(new_inst)
+        return new_inst
+
     def _update_cpt(self, dataset, node, instance={}):
         node.cpt = dataset.get_pref_order(instance, node.variables)
         count = dataset.get_count(instance,node.variables)
@@ -154,12 +165,12 @@ class LPTree:
 
     # modify the model
     def get_neighbors(self, dataset):
-        return self.remove_random_leaf() + self.merge_least_preferred_branches() + self.add_new_leaf()
+        return self.remove_random_leaf() + self.merge_least_preferred_branches() #+ self.add_new_leaf()
 
-    def merge_two_nodes(self):
+    # def merge_two_nodes(self):
         # TODO
         # merge a node with its child if the parent’s children all have the same variable
-        pass
+        # pass
 
     def remove_random_leaf(self):
         out = []
@@ -205,7 +216,6 @@ class LPTree:
             #     out.append(new_tree)
         return out
 
-
     def get_mean_rank(self, dataset):
         sum_ranks = 0
         for instance in dataset.dataset:
@@ -216,5 +226,13 @@ class LPTree:
         r = 1 + self.root.get_lp_rank(o)
         return r
 
-    def compare(self, o1, o2):
-        return False
+    def export(self, filename):
+        with open(filename, "w") as f:
+            f.write("digraph G { \n");
+            f.write("ordering=out;\n");
+            self.root._export(f)
+            f.write("}\n");
+
+
+    # def compare(self, o1, o2):
+    #     return False
