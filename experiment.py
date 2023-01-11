@@ -9,11 +9,11 @@ def recommendation_in_config(test_set, model):
         random.shuffle(var_order)
         i = 0
         for v in var_order:
-            predict = model.get_preferred_extension(partial_inst)
-            if predict[v] == instance[v]: # correct
+            predict, _ = model.get_preferred_extension(partial_inst)
+            if predict.get(v) == instance[v]: # correct
                 correct[i] += 1
             total[i] += 1
             partial_inst[v] = instance[v] # give another clue
             i += 1
-    print(sum(correct),"/",sum(total))
+    print(sum(correct),"/",sum(total),", ",(100*sum(correct)/sum(total)),"%")
     return sum(correct)/sum(total)

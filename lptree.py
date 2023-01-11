@@ -106,16 +106,17 @@ class Node:
             nb += 1
         assert False
 
-    def get_preferred_extension(self, instance):
+    def get_preferred_extension(self, instance, order):
+        order += self.variables
         for o in self.cpt:
             instance2 = {}
             outcome.instantiate(instance2, self.variables, o)
             if outcome.is_compatible(instance2, instance):
                 outcome.instantiate(instance, self.variables, o)
                 if self.children.get(o) is not None: # take the labelled edge
-                    self.children.get(o).get_preferred_extension(instance)
+                    self.children.get(o).get_preferred_extension(instance, order)
                 elif self.children.get(None) is not None: # if not, take the unlabelled edge
-                    self.children.get(None).get_preferred_extension(instance)
+                    self.children.get(None).get_preferred_extension(instance, order)
                 # is not, it’s a leaf
                 return
 
@@ -142,8 +143,12 @@ class LPTree:
 
     def get_preferred_extension(self, instance):
         new_inst = instance.copy()
-        self.root.get_preferred_extension(new_inst)
-        return new_inst
+        order = []
+        self.root.get_preferred_extension(new_inst, order)
+        for v in self.vars: # branches may be incomplete
+            if new_inst.get(v) is None:
+                order.append(v)
+        return new_inst, order
 
     def _update_cpt(self, dataset, node, instance={}):
         node.cpt = dataset.get_pref_order(instance, node.variables)

@@ -204,7 +204,6 @@ class CPNet:
         # print("model MDL:",l)
         return l
 
-
     def get_preferred_extension(self, instance):
         instance = instance.copy()
         for n in self.topo_order:
@@ -218,7 +217,10 @@ class CPNet:
                 outcome.instantiate(instance2, n.variables, o)
                 if outcome.is_compatible(instance2, instance):
                     outcome.instantiate(instance, n.variables, o)
-        return instance
+        var_order = []
+        for n in self.topo_order:
+            var_order += n.variables
+        return instance, var_order
 
     def get_data_MDL2(self, dataset):
         sum_score = 0

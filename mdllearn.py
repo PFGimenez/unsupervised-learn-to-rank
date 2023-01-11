@@ -11,7 +11,7 @@ def get_data_MDL2(model, dataset):
         partial_inst = {}
         random.shuffle(var_order)
         for v in var_order:
-            predict = model.get_preferred_extension(partial_inst)
+            predict, correction_order = model.get_preferred_extension(partial_inst)
             # print("Extension of",partial_inst,"is",predict)
             if predict != instance: # error
                 sum_score += dataset.counts[repr(instance)]
@@ -29,19 +29,27 @@ def get_data_MDL(model, dataset):
         # print("Score for",instance)
         partial_inst = {}
         while True:
-            predict = model.get_preferred_extension(partial_inst)
-            for k,v in instance.items():
-                if v != predict.get(k): # error
+            # print(partial_inst)
+            predict, correction_order = model.get_preferred_extension(partial_inst)
+            # print("Prediction:",predict)
+            for k in correction_order:
+                # predict may miss values
+                if predict.get(k) is None:
+                    predict[k] = dataset.get_pref_order(predict, [k])[0]
+                    # print("Fill with most common:",predict[k])
+                    # predict[k] = dataset.domain[k]
+                if instance[k] != predict[k]: # error
                     # print("Error for",k)
                     sum_score += dataset.counts[repr(instance)] * math.log(len(dataset.vars)) # TODO: how to count?
-                    partial_inst[k] = v # give one clue
+                    partial_inst[k] = instance[k] # give one clue
                     break
             # print("No error")
             break # no error
     return sum_score
 
 def get_MDL(model, dataset):
-    return model.get_model_MDL() + get_data_MDL(model, dataset)
+    # return model.get_MDL(dataset) # version with log(rank)
+    return model.get_model_MDL() + get_data_MDL(model, dataset) # version with MPE
 
 def learn(dataset, initial_model):
     l = initial_model
