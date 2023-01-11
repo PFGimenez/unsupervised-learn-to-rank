@@ -23,29 +23,58 @@ def get_data_MDL2(model, dataset):
     return sum_score
 
 # always correct a variable
-def get_data_MDL(model, dataset):
+def get_data_MDL3(model, dataset):
     sum_score = 0
     for instance in dataset.uniques:
-        # print("Score for",instance)
+        print("Score for",instance)
         partial_inst = {}
         while True:
-            # print(partial_inst)
+            print(partial_inst)
             predict, correction_order = model.get_preferred_extension(partial_inst)
-            # print("Prediction:",predict)
+            print("Prediction:",predict)
             for k in correction_order:
                 # predict may miss values
                 if predict.get(k) is None:
                     predict[k] = dataset.get_pref_order(predict, [k])[0]
-                    # print("Fill with most common:",predict[k])
+                    print("Fill with most common:",predict[k])
                     # predict[k] = dataset.domain[k]
                 if instance[k] != predict[k]: # error
-                    # print("Error for",k)
+                    print("Error for",k)
                     sum_score += dataset.counts[repr(instance)] * math.log(len(dataset.vars)) # TODO: how to count?
                     partial_inst[k] = instance[k] # give one clue
-                    break
-            # print("No error")
+                else:
+                    print("No error")
             break # no error
     return sum_score
+
+# one prediction per order
+def get_data_MDL(model, dataset):
+    random.seed(0)
+    sum_score = 0
+    var_order = dataset.vars.copy()
+    # for instance in dataset.dataset:
+    for instance in dataset.uniques:
+        # print("Score for",instance)
+        for i in range(len(dataset.vars)):
+            random.shuffle(var_order)
+            partial_inst = {}
+            for j in range(i):
+                partial_inst[var_order[j]] = instance[var_order[j]]
+
+            predict, _ = model.get_preferred_extension(partial_inst)
+            for v in var_order:
+                if predict.get(v) is None:
+                    predict[v] = dataset.get_pref_order(predict, [v])[0]
+                    # print("Fill with most common:",predict[v])
+
+            if predict != instance: # error
+                # sum_score += 1
+                sum_score += dataset.counts[repr(instance)]
+            else:
+                # print("All good")
+                break
+    return sum_score
+
 
 def get_MDL(model, dataset):
     # return model.get_MDL(dataset) # version with log(rank)

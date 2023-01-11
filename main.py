@@ -17,8 +17,8 @@ if __name__ == "__main__":
     h = outcome.Dataset(csv)
 
     csv_test = outcome.read_csv("datasets/renault_smaller_test.csv")
+    # csv_test = csv_test.head(3)
     h_test = outcome.Dataset(csv_test)
-
 
     # net = cpnet.CPNet(["A","B","C"])
     # net.add_child(net.nodes[0], net.nodes[1])
@@ -35,21 +35,26 @@ if __name__ == "__main__":
     # net2.export("cpnet2.dot")
     # print("Manual MDL:",net2.get_MDL(h))
 
-    # print("CP-net learning")
-    # net = cpnet.CPNet(h.vars, h)
-    # net = mdllearn.learn(h, net)
-    # net.export("cpnet.dot")
-    # experiment.recommendation_in_config(h, net)
+    print("CP-net learning")
+    net = cpnet.CPNet(h.vars, h)
+    net = mdllearn.learn(h, net)
+    net.export("cpnet.dot")
+    experiment.recommendation_in_config(h, net)
 
     print("LP-tree learning (no MDL optimization)")
     l = aaailearn.learn_lptree(h, 500, 2)
     # l = mdllearn.learn(h, l)
     l.export("lptree.dot")
-    experiment.recommendation_in_config(h_test, l)
+    print("Data MDL:",mdllearn.get_data_MDL(l, h_test))
+
     print("LP-tree learning (with MDL optimization)")
-    l = mdllearn.learn(h, l)
+    l2 = mdllearn.learn(h, l)
+    l2.export("lptree2.dot")
+
+    print("Data MDL AAAI:",mdllearn.get_data_MDL(l, h_test))
+    print("Data MDL new:",mdllearn.get_data_MDL(l2, h_test))
     experiment.recommendation_in_config(h_test, l)
-    l.export("lptree2.dot")
+    experiment.recommendation_in_config(h_test, l2)
 
     # l = aaailearn.learn_lptree(h, 1000, 1)
     # l.root.export("out.dot")
