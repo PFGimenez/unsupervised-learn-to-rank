@@ -106,17 +106,16 @@ class Node:
             nb += 1
         assert False
 
-    def get_preferred_extension(self, instance, order):
-        order += self.variables
+    def get_preferred_extension(self, instance):
         for o in self.cpt:
             instance2 = {}
             outcome.instantiate(instance2, self.variables, o)
             if outcome.is_compatible(instance2, instance):
                 outcome.instantiate(instance, self.variables, o)
                 if self.children.get(o) is not None: # take the labelled edge
-                    self.children.get(o).get_preferred_extension(instance, order)
+                    self.children.get(o).get_preferred_extension(instance)
                 elif self.children.get(None) is not None: # if not, take the unlabelled edge
-                    self.children.get(None).get_preferred_extension(instance, order)
+                    self.children.get(None).get_preferred_extension(instance)
                 # is not, it’s a leaf
                 return
 
@@ -125,30 +124,32 @@ class LPTree:
     def __init__(self, graph, variables):
         self.root = graph
         self.vars = variables
+        self.defaults = {}
 
     def get_model_MDL(self):
         return self.root.get_MDL()
 
-    def get_data_MDL(self, dataset):
-        sum_ranks = 0
-        for instance in dataset.uniques:
-            sum_ranks += dataset.counts[repr(instance)] * math.log(self.get_rank(instance))
-        return sum_ranks
+    # def get_data_MDL(self, dataset):
+    #     sum_ranks = 0
+    #     for instance in dataset.uniques:
+    #         sum_ranks += dataset.counts[repr(instance)] * math.log(self.get_rank(instance))
+    #     return sum_ranks
 
-    def get_MDL(self, dataset):
-        return self.get_model_MDL() + self.get_data_MDL(dataset)
+    # def get_MDL(self, dataset):
+    #     return self.get_model_MDL() + self.get_data_MDL(dataset)
 
     def update_cpt(self, dataset):
+        for v in dataset.vars:
+            self.defaults[v] = dataset.get_pref_order({}, [v])[0]
         self._update_cpt(dataset, self.root)
 
     def get_preferred_extension(self, instance):
         new_inst = instance.copy()
-        order = []
-        self.root.get_preferred_extension(new_inst, order)
+        self.root.get_preferred_extension(new_inst)
         for v in self.vars: # branches may be incomplete
             if new_inst.get(v) is None:
-                order.append(v)
-        return new_inst, order
+                new_inst[v] = self.defaults[v]
+        return new_inst
 
     def _update_cpt(self, dataset, node, instance={}):
         node.cpt = dataset.get_pref_order(instance, node.variables)
@@ -156,8 +157,9 @@ class LPTree:
         for k,v in node.children.items():
             if k is not None:
                 new_inst = instance.copy()
-                dataset.instantiate(new_inst, node.variables, k)
-                del count[k]
+                outcome.instantiate(new_inst, node.variables, k)
+                if count.get(k) is not None:
+                    del count[k]
             else:
                 if len(node.children)==1:
                     new_inst = instance
@@ -165,12 +167,15 @@ class LPTree:
                     top = list(sorted(count.items(), key=lambda item: -item[1]))
                     new_inst = instance.copy() # all counts are 0: no conditioning
                     if len(top) > 0:
-                        dataset.instantiate(new_inst, node.variables, top[0][0])
+                        outcome.instantiate(new_inst, node.variables, top[0][0])
             self._update_cpt(dataset, v, new_inst)
 
     # modify the model
     def get_neighbors(self, dataset):
-        return self.remove_random_leaf() + self.merge_least_preferred_branches() #+ self.add_new_leaf()
+        lptrees = self.remove_random_leaf() + self.merge_least_preferred_branches() #+ self.add_new_leaf()
+        for lptree in lptrees:
+            lptree.update_cpt(dataset)
+        return lptrees
 
     # def merge_two_nodes(self):
         # TODO
@@ -238,6 +243,3 @@ class LPTree:
             self.root._export(f)
             f.write("}\n");
 
-
-    # def compare(self, o1, o2):
-    #     return False

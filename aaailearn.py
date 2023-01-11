@@ -10,7 +10,9 @@ def powerset(iterable, k):
     # pass
 
 def learn_lptree(dataset, tau, k):
-    return lptree.LPTree(_learn_lptree(dataset, tau, k), dataset.vars)
+    l = lptree.LPTree(_learn_lptree(dataset, tau, k), dataset.vars)
+    l.update_cpt(dataset)
+    return l
 
 def _learn_lptree(dataset, tau, k, seen_vars=[], instance={}):
     # print("Search node. Instance:",instance,"seen vars:",seen_vars)

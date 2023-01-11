@@ -3,6 +3,9 @@ import aaailearn
 import mdllearn
 import cpnet
 import experiment
+import ensemble
+import sklearn.cluster
+import pandas as pd
 
 def open_dataset(file):
     d = []
@@ -13,7 +16,7 @@ def open_dataset(file):
     return d
 
 if __name__ == "__main__":
-    csv = outcome.read_csv("datasets/renault_smaller_test.csv")
+    csv = outcome.read_csv("datasets/renault_smaller_train.csv")
     h = outcome.Dataset(csv)
 
     csv_test = outcome.read_csv("datasets/renault_smaller_test.csv")
@@ -35,19 +38,39 @@ if __name__ == "__main__":
     # net2.export("cpnet2.dot")
     # print("Manual MDL:",net2.get_MDL(h))
 
-    print("CP-net learning")
+
+    kmeans = sklearn.cluster.KMeans(3).fit(csv)
+    models1 = []
+    models2 = []
+    for k in range(3):
+        data = csv.loc[kmeans.labels_ == k]
+        h_train = outcome.Dataset(data)
+        h_train.domains = h.domains.copy()
+        h_train.space_size = h.space_size
+        models1.append(aaailearn.learn_lptree(h_train, 20, 2))
+        net = cpnet.CPNet(h.vars, h)
+        models2.append(mdllearn.learn(h_train, net))
+    e1 = ensemble.Ensemble(models1)
+    experiment.recommendation_in_config(h_test, e1)
+    e2 = ensemble.Ensemble(models2)
+    experiment.recommendation_in_config(h_test, e2)
+
+
+    print("CP-net learning (baseline)")
     net = cpnet.CPNet(h.vars, h)
+    experiment.recommendation_in_config(h, net)
+    print("CP-net learning (MDL)")
     net = mdllearn.learn(h, net)
     net.export("cpnet.dot")
     experiment.recommendation_in_config(h, net)
 
-    print("LP-tree learning (no MDL optimization)")
-    l = aaailearn.learn_lptree(h, 500, 2)
+    print("LP-tree learning (AAAI)")
+    l = aaailearn.learn_lptree(h, 20, 2)
     # l = mdllearn.learn(h, l)
     l.export("lptree.dot")
     print("Data MDL:",mdllearn.get_data_MDL(l, h_test))
 
-    print("LP-tree learning (with MDL optimization)")
+    print("LP-tree learning (MDL)")
     l2 = mdllearn.learn(h, l)
     l2.export("lptree2.dot")
 
@@ -55,6 +78,11 @@ if __name__ == "__main__":
     print("Data MDL new:",mdllearn.get_data_MDL(l2, h_test))
     experiment.recommendation_in_config(h_test, l)
     experiment.recommendation_in_config(h_test, l2)
+
+    e = ensemble.Ensemble([l2, net])
+    experiment.recommendation_in_config(h_test, e)
+
+
 
     # l = aaailearn.learn_lptree(h, 1000, 1)
     # l.root.export("out.dot")

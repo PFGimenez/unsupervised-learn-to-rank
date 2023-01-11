@@ -1,6 +1,8 @@
 import random
 
 def recommendation_in_config(test_set, model):
+    # TODO: cross-validation
+    random.seed(1)
     correct = [0]*len(test_set.vars)
     total = [0]*len(test_set.vars)
     var_order = test_set.vars.copy()
@@ -9,7 +11,7 @@ def recommendation_in_config(test_set, model):
         random.shuffle(var_order)
         i = 0
         for v in var_order:
-            predict, _ = model.get_preferred_extension(partial_inst)
+            predict = model.get_preferred_extension(partial_inst)
             if predict.get(v) == instance[v]: # correct
                 correct[i] += 1
             total[i] += 1

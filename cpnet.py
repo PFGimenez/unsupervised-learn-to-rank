@@ -14,7 +14,7 @@ class CPNet:
             self.update_cpt(dataset)
 
     def get_neighbors(self, dataset):
-        cpnets = self.update_edges_neighbors() #+ self.merge_nodes_neighbors()# + self.split_nodes_neighbors()
+        cpnets = self.update_edges_neighbors() + self.merge_nodes_neighbors()# + self.split_nodes_neighbors()
         for net in cpnets:
             net.update_cpt(dataset)
         # print("Nb neighbors:",len(cpnets))
@@ -68,7 +68,7 @@ class CPNet:
         for i in range(len(self.nodes)):
             for j in range(len(self.nodes)):
                 if i != j:
-                    if len(self.nodes[i].variables) + len(self.nodes[j].variables) < 5:
+                    if len(self.nodes[i].variables) + len(self.nodes[j].variables) <= 4:
                         # merge into i
                         new_cpnet = copy.deepcopy(self)
                         new_cpnet.merge_nodes(new_cpnet.nodes[i],new_cpnet.nodes[j])
@@ -99,9 +99,16 @@ class CPNet:
         if self.topo_order.index(n1) > self.topo_order.index(n2):
             # n1 is lower than n2 in the DAG: n1 gets n2’s parents (to keep a DAG)
             n1.parents = list(set(n1.parents + n2.parents))
+            for p in n1.parents:
+                if n1 not in p.children:
+                    p.children.append(n1)
         else:
             # n1 is higher than n2 in the DAG: n1 gets n2’s children (to keep a DAG)
             n1.children = list(set(n1.children + n2.children))
+            for c in n1.children:
+                if n1 not in c.parents:
+                    c.parents.append(n1)
+
         n1.variables += n2.variables
         self.nodes.remove(n2)
         for n in self.nodes:
@@ -109,7 +116,8 @@ class CPNet:
                 n.children.remove(n2)
             if n2 in n.parents:
                 n.parents.remove(n2)
-        self.update_topo_order()
+        done = self.update_topo_order()
+        assert done
 
     def split_node(self, n1, var): # create a new node with variables "var" from n1
         n2 = Node(var)
@@ -120,7 +128,8 @@ class CPNet:
             n2.parents.append(n)
         for n in n1.children:
             n2.children.append(n)
-        self.update_topo_order()
+        done = self.update_topo_order()
+        assert done
 
     def reverse_edge(self, n1, n2):
         if n1 in n2.children:
@@ -134,7 +143,8 @@ class CPNet:
     def remove_child(self, p, c):
         p.children.remove(c)
         c.parents.remove(p)
-        self.update_topo_order()
+        done = self.update_topo_order()
+        assert done
 
     def add_child(self, p, c):
         # if c not in p.children:
@@ -179,6 +189,7 @@ class CPNet:
         while len(roots) > 0:
             n = roots.pop()
             topo_order.append(n)
+            assert (n in self.nodes)
             for c in n.children:
                 has_parent = False
                 for p in c.parents:
@@ -206,7 +217,9 @@ class CPNet:
 
     def get_preferred_extension(self, instance):
         instance = instance.copy()
+        done = self.update_topo_order()
         for n in self.topo_order:
+            assert (n in self.nodes)
             var = []
             for p in n.parents:
                 var += p.variables
@@ -217,40 +230,37 @@ class CPNet:
                 outcome.instantiate(instance2, n.variables, o)
                 if outcome.is_compatible(instance2, instance):
                     outcome.instantiate(instance, n.variables, o)
-        var_order = []
-        for n in self.topo_order:
-            var_order += n.variables
-        return instance, var_order
+        return instance
 
-    def get_data_MDL2(self, dataset):
-        sum_score = 0
-        for instance in dataset.uniques:
-            sum_score += dataset.counts[repr(instance)] * self.get_path_length(instance.copy())*math.log(len(dataset.vars))
-        # print("data MDL:",sum_score)
-        return sum_score
+    # def get_data_MDL2(self, dataset):
+    #     sum_score = 0
+    #     for instance in dataset.uniques:
+    #         sum_score += dataset.counts[repr(instance)] * self.get_path_length(instance.copy())*math.log(len(dataset.vars))
+    #     # print("data MDL:",sum_score)
+    #     return sum_score
 
-    def get_path_length(self, instance):
-        length = 0
-        redo = True
-        while redo:
-            redo = False
-            for n in reversed(self.topo_order):
-                var = []
-                for p in n.parents:
-                    var += p.variables
-                value_parents = tuple([instance[k] for k in var])
-                l = n.cpt[value_parents]
-                value_node = tuple([instance[k] for k in n.variables])
-                index = l.index(value_node)
-                if index > 0:
-                    redo = True
-                    length += index
-                    outcome.instantiate(instance, n.variables, l[0])
-                    break
-        return length
+    # def get_path_length(self, instance):
+    #     length = 0
+    #     redo = True
+    #     while redo:
+    #         redo = False
+    #         for n in reversed(self.topo_order):
+    #             var = []
+    #             for p in n.parents:
+    #                 var += p.variables
+    #             value_parents = tuple([instance[k] for k in var])
+    #             l = n.cpt[value_parents]
+    #             value_node = tuple([instance[k] for k in n.variables])
+    #             index = l.index(value_node)
+    #             if index > 0:
+    #                 redo = True
+    #                 length += index
+    #                 outcome.instantiate(instance, n.variables, l[0])
+    #                 break
+    #     return length
 
-    def get_MDL(self, dataset):
-        return self.get_model_MDL() + self.get_data_MDL(dataset)
+    # def get_MDL(self, dataset):
+    #     return self.get_model_MDL() + self.get_data_MDL(dataset)
 
 class Node:
 

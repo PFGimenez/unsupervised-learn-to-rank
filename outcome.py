@@ -24,7 +24,6 @@ class Dataset:
 
     def __init__(self, df):
         self.vars = list(df.columns)
-        print(self.vars)
         self.dataset = df.to_dict('records')
         self.memoize = {}
         self.domains = {}
