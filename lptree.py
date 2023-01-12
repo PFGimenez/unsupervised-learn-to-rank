@@ -40,9 +40,10 @@ class Node:
 
     def merge_branches(self):
         if self.children.get(None) is None:
+            # assert len(self.cpt) == len(self.children)
             self.children[None] = self.children[self.cpt[-2]]
-            del self.children[-2]
-            del self.children[-1]
+            del self.children[self.cpt[-2]]
+            del self.children[self.cpt[-1]]
         else:
             for v in reversed(self.cpt):
                 if self.children.get(v) is not None:
@@ -53,7 +54,8 @@ class Node:
     def get_leaves(self): # return the list of couples (node, value) such as the child of node with the label "value" is a leaf
         l = []
         for k,v in self.children.items():
-            if len(v.children) == 0: # it’s a leaf
+            # only remove leaf if it’s the only child of its parent
+            if len(v.children) == 0 and len(self.children)==1: # it’s a leaf
                 l.append((self,k))
             else:
                 l += v.get_leaves()
@@ -118,6 +120,25 @@ class Node:
                     self.children.get(None).get_preferred_extension(instance)
                 # is not, it’s a leaf
                 return
+        assert False
+
+    def get_data_MDL(self, instance):
+        for i in range(len(self.cpt)):
+            o = self.cpt[i]
+            instance2 = {}
+            outcome.instantiate(instance2, self.variables, o)
+            if outcome.is_compatible(instance2, instance):
+                outcome.instantiate(instance, self.variables, o)
+                out = 0
+                # print(self.variables,o,i)
+                if self.children.get(o) is not None: # take the labelled edge
+                    out = self.children.get(o).get_data_MDL(instance)
+                elif self.children.get(None) is not None: # if not, take the unlabelled edge
+                    out = self.children.get(None).get_data_MDL(instance)
+                # is not, it’s a leaf
+                return i + out
+        assert False
+
 
 class LPTree:
 
@@ -140,7 +161,7 @@ class LPTree:
 
     def update_cpt(self, dataset):
         for v in dataset.vars:
-            self.defaults[v] = dataset.get_pref_order({}, [v])[0]
+            self.defaults[v] = dataset.get_pref_order({}, [v])[0][0]
         self._update_cpt(dataset, self.root)
 
     def get_preferred_extension(self, instance):
@@ -151,9 +172,20 @@ class LPTree:
                 new_inst[v] = self.defaults[v]
         return new_inst
 
+    def get_data_MDL(self, instance):
+        new_inst = instance.copy()
+        score = self.root.get_data_MDL(new_inst)
+        # print("Score:",score,"for",instance)
+        for v in self.vars: # branches may be incomplete
+            if new_inst.get(v) is None:
+                if new_inst[v] != self.defaults[v]:
+                    score += math.log(len(instance))
+        return score
+
+
     def _update_cpt(self, dataset, node, instance={}):
         node.cpt = dataset.get_pref_order(instance, node.variables)
-        count = dataset.get_count(instance,node.variables)
+        count = dataset.get_count(instance,node.variables).copy()
         for k,v in node.children.items():
             if k is not None:
                 new_inst = instance.copy()

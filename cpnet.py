@@ -215,6 +215,27 @@ class CPNet:
         # print("model MDL:",l)
         return l
 
+    def get_data_MDL(self, instance):
+        instance = instance.copy()
+        done = self.update_topo_order()
+        score = 0
+        for n in self.topo_order:
+            assert (n in self.nodes)
+            var = []
+            for p in n.parents:
+                var += p.variables
+            value_parents = tuple([instance[k] for k in var])
+            l = n.cpt[value_parents]
+            for i in range(len(l)):
+                o = l[i]
+                instance2 = {}
+                outcome.instantiate(instance2, n.variables, o)
+                if outcome.is_compatible(instance2, instance):
+                    score += math.log(len(instance)) * i
+                    outcome.instantiate(instance, n.variables, o)
+                    break
+        return score
+
     def get_preferred_extension(self, instance):
         instance = instance.copy()
         done = self.update_topo_order()

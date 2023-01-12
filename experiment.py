@@ -12,8 +12,12 @@ def recommendation_in_config(test_set, model):
         i = 0
         for v in var_order:
             predict = model.get_preferred_extension(partial_inst)
+            # print("Prediction for",partial_inst,":",predict)
             if predict.get(v) == instance[v]: # correct
                 correct[i] += 1
+                # print("Correct")
+            # else:
+                # print("Erreur")
             total[i] += 1
             partial_inst[v] = instance[v] # give another clue
             i += 1

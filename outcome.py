@@ -60,7 +60,7 @@ class Dataset:
                 out.append(h)
         return out
 
-    def get_count(self, instance, variables):
+    def get_count(self, instance, variables): # output value should NOT be modified!
         out = self.memoize.get((tuple(sorted(instance.items())), tuple(variables)))
         if out is not None:
             return out

@@ -70,8 +70,12 @@ def get_data_MDL(model, dataset):
     sum_score = 0
     # for instance in dataset.dataset:
     for instance in dataset.uniques:
-        for i in range(3):
-            sum_score += get_data_MDL_one_instance(model, instance) * dataset.counts[repr(instance)] / 3
+        nb = 1
+        if dataset.counts[repr(instance)] > 10:
+            nb = 3
+        # for i in range(nb):
+        # sum_score += model.get_data_MDL(instance) * dataset.counts[repr(instance)]# / nb
+        sum_score += get_data_MDL_one_instance(model, instance) * dataset.counts[repr(instance)] / nb
     return sum_score
 
 
@@ -89,6 +93,8 @@ def learn(dataset, initial_model):
     print("Initial MDL:",best_score)
     while True:
         l,s = modify_and_evaluate(dataset, l)
+        if s is None:
+            break # no more neighbors
         if best_score is None or s < best_score:
             best_model = l
             best_score = s
